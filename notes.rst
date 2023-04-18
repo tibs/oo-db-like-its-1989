@@ -53,6 +53,14 @@ Objects have:
 
 Methods can "see" the values of the object.
 
+Single user
+===========
+
+Given the application space, it wasn't obvious that we *needed* multiple user
+access to the database. And it simplifies things an enormous amount.
+
+Of course, we now know how successful sqlite has been over the years.
+
 
 Object storage and paging
 =========================
@@ -115,6 +123,26 @@ Schemas and inheritance
 =======================
 
 Hmm.
+
+Collections
+===========
+
+This was before languages like Python. So what sorts of collections to support
+was not obvious.
+
+I did some research (including reading up on Smalltalk quite a bit).
+
+I think we ended up with:
+
+* a list or array type - I can't rememember the details of this, but I think
+  it was a linked list, and I think we definitely wanted to be able to operate
+  on each end equally
+* Sets
+* Bags
+* Maps (dictionaries/hashes)
+
+For references, we wanted to be able to do the standard arrangements:
+one-to-one and one-to-many
 
 Why GIS is odd
 ==============
@@ -423,3 +451,20 @@ versions.
 (Maybe compare with how BSD-like operating systems have been able to do
 backups of their disks because their file systems support this sort of
 option - although I don't know when that became common.)
+
+So - do references have attributes?
+===================================
+
+**Big** argument
+
+I always thought "no", with the *possible* exception (practicality over
+purity) of *direction*.
+
+Consider a postal route (a line object that refers to other line or edge
+objects). A postal route may go one way along a street, and then come
+back the other way.
+
+You can always simulate references with attributes by adding in extra objects.
+But that might be regarded as clumsy.
+
+The argument over this could get quite heated...
