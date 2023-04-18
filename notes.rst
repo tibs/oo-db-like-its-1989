@@ -40,6 +40,13 @@ Objects
 Objects have:
 
 * an id
+
+  for "reasons", we'll make the id an object id (a single value identifying
+  this object) and a "version" (which will be an integer field that can go up
+  to a sufficiently large number). We'll ignore the version field for a while.
+  (but to my memory, we did introduce the space for it early on - this will
+  have been from experience with other things, I think?)
+
 * a class
 * zero or more values
 * zero or more methods
@@ -64,6 +71,22 @@ Keep "currently in use" objects in memory, page them out to disk if necessary.
 
   (I'm assuming the Smalltalk GIS could have done this as well, they just
   didn't think "but what if the map was **bigger**",)
+
+An index to find them
+=====================
+
+We'll need an index so we can take an object id and find its location on disk
+(that is, in the database file or files - I'm going to assume a single file,
+but I can't remember if we ever split into multiple files for a single
+database).
+
+I believe we used a B-tree at first - I don't remember if this got changed.
+
+We *did* do some very large scale tests to show that the database worked with
+very large sizes - the sort of sizes that could only be done by "stringing
+together" lots of physicial disks (at the time) into a single virtual disk. My
+memory wants to say "petabyte scale", but that feels unlikely even for the
+early 2000s?
 
 Remember a version number
 =========================
@@ -223,6 +246,29 @@ A line can be made of many edges. Sometimes they can be disjoint, too (well,
 at least maybe).
 
 So there's a decision to be made - can a point be made of many nodes?
+
+An index to find (spatial) things
+=================================
+
+Once you've got things with coordinates, you want to be able to search for
+them in space.
+
+The natural way is then to compute the bounding box for an entity, and index
+that, rather than trying to be too clever.
+
+The initial spatial indexing used quadtrees (I thought this was fascinating at
+the time), although I believe it quite soon moved on to something more
+sophisticated, which I know I didn't understand at the time.
+
+I'm going to assume that the technology has probably become mature in this
+area (no, that's not meant to be a pun), but it's not something I've ever
+followed.
+
+  (The nice thing about quadtrees is that they don't get deep very fast. The
+  nearest I've ever done to an academic paper was a note in a journal that
+  showed that representing all the vector data in the OS(GB) sheet 101
+  (Sheffield) only need a quadtree of a smallish depth, something around 4 or
+  thereabouts. Which was regarded as counterintuitive at the time, I think.)
 
 Objects in memory
 =================
