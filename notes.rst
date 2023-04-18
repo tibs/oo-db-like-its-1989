@@ -10,6 +10,15 @@ Some stuff I remember, some stuff I confabulated, some stuff I just made up.
 https://www.tonyibbs.co.uk/lsl-timeline.html#gis-development-1988-onwards
 and thereafter
 
+  "Gothic" - satisfyingly solid with nice twiddly bits
+
+  When we came up with this as an internal development name, we were promised
+  it would never escape and be used in production. Oh well.
+
+  Amusingly, when I was working in Glasgow University (still mostly for the
+  same company and on this GIS), I worked in offices inside Victorian
+  neo-Gothic buildings.
+
 I haven't had sight of the codebase I'm (vaguely) remembering since 2003, so I
 don't think I can possibly give away anything useful!
 
@@ -17,8 +26,241 @@ don't think I can possibly give away anything useful!
 again, but so it goes).
 
 
+Vector versus raster GIS
+========================
+
+Obviously vector is the correct choice...
 
 
+Objects
+=======
+
+Objects have:
+
+* an id
+* a class
+* zero or more values
+* zero or more methods
+
+Methods can "see" the values of the object.
+
+
+Object storage and paging
+=========================
+
+Objects stored on disk.
+
+Keep "currently in use" objects in memory, page them out to disk if necessary.
+
+  Tell the story of the scarily good IBM GIS that was written in Smalltalk so
+  was limited in the size of map it could represent by available memory (in
+  the 1990s!) and how that meant we won at least one contract.
+
+  And note that paging seemed so "obvious" to me that I never considered not
+  doing it. Of course, our test case *was* Sheffield 101 (is that the right
+  sheet number) which is pretty densse.
+
+  (I'm assuming the Smalltalk GIS could have done this as well, they just
+  didn't think "but what if the map was **bigger**",)
+
+Remember a version number
+=========================
+
+After working on a few transfer formats and some file formats, you begin to
+learn to always put a version number at the start of the file, specifying the
+version of the file format / layout.
+
+Or so you'd think.
+
+Because if you don't, then when the inevitable version 2 comes along (normally
+much earlier than you expect) your code has to instrospec the file to see if
+it's version 1 or not, by looking for the *absence* of a version number
+(essentially).
+
+Hopefully this happens before the first relase to the world.
+
+Also, in the same line, it's nice to put a format identifier at the start.
+This will make ``file`` happier (if you're on a Unix), and also generally
+makes the file or database more identifiable as what it is, without needing to
+rely on having a particular file extension or (again) introspecting the data.
+
+(Perhaps reference KBUS here?)
+
+Schemas and inheritance
+=======================
+
+Hmm.
+
+Why GIS is odd
+==============
+
+Two dimensional. But may represent (significant portions of) a sphere.
+
+  **Note** find someone very good to write your coordinate handling libraries.
+  They may end up inventing very rigorous testing mechanisms as well.
+
+Topology plus topography. They're linked, somehow. But if you just use the
+topology (no actual coordinates) then you've got a graph database, which is cool.
+
+A line may have many many coordinates defining it (think fjords, or the whole
+of the UK coastline).
+
+An object may have zero or a lot of values (at least up to a hundred, and
+maybe more)
+
+Representation is a thing - we draw maps. And they look different at different
+scales. (Methods can and will help with that, as objects can "talk" to each
+other and negotiate representation.)
+
+Slivers. And *this* is why vector is better than raster (<smile>).
+
+Contours. Hmm.
+
+  At the time, RDBs didn't handle values which might vary hugely in size
+  (coordinates) or rows that might have large numbers of columns that were
+  only occasionally used. We're thinking Ingres and Oracle (Ingres was
+  generally our preferred choice, because it was *much* easier to install and
+  manage, and I think also cheaper?)
+
+  Check: Ingres was the ancestor of PostgreSQL? Read
+  https://en.wikipedia.org/wiki/Ingres_(database) ...
+
+  Of course, the received wisdom at the time was that a database needed a
+  department to manage it, so it was quite hard to convince companies to take
+  on another, weird, sort of database, which would presumably need even mmore
+  management (even though it didn't, in fact).
+
+  Also, it was perceived as making a data silo in this weird other database,
+  even though we did provide means of communication (which I remmeber nothing
+  about, unfortunately).
+
+  Nowadays, such concerns seem a bit quaint, with so many different database
+  and database adjacent technologies.
+
+Why GIS?
+========
+
+Mapping - actual representation of maps
+
+But also map analysis, and *in particular* the first was to be for route
+planning.
+
+And that includes things like "if its raining, what weight of vehicle can
+safely traverse this field, given its characteristics" - hence methods are
+needed, because that's an answer whose calculation needs external factors to
+be takeb into account (arguments).
+
+Topology: nodes, edges, faces
+=============================
+
+Explain what they are!
+
+References
+==========
+
+How we link objects together. Makes everything work.
+
+Bi-directional
+
+* explain *why*
+* explain how that was an unpopular decision in the industry
+* explain how I was right all along (mwah hah hah hah)
+
+I was intensely validated when I looked, some years later, at the Neo4J
+documentation and saw that they also regarded bi-directional referneces as "obvious".
+
+Topology and directionality
+===========================
+
+* node knows the edges attached to it, in a predictable order (clockwise?), so
+  one can go "next, next" at them
+* edge knows its start and end node, and its left and right face
+* given that, we can deduce an order for the edges surrounding a face
+
+Where does the geometry live?
+=============================
+
+* On the nodes and edges. Minimalistic. (Edges need shape, so they need to
+  have "internal" coordinates). We don't need coordinates on faces, but
+  perhaps *might* do so for some reason (efficiency of some sort?), or might
+  make it so the face can directly reference the coordinates on the edges
+  (sort of like compilers will share string fragments).
+
+  I will argue that an edge has *all* its coordinates, even though the start
+  and end coordinates match the corresponding nodes. But if so, care must be
+  taken to maintain that.
+
+  Nodes do need their own coordinates, because they might not be associated
+  with any edges.
+
+* Also on the points and lines. Clearly not *needed*, but might be useful for
+  efficiency? Again, if doing this, consider if the coordinates can be shared.
+
+I honestly can't remember if we stored coordinates anywhere other than on the
+nodes and edges.
+
+Other coordinates
+=================
+
+Methods can be used to do things like calculate representation - more
+coordinates. And  caching them may make sense. So that's another sort of value
+that stores coordinates.
+
+Also, if one is calculatign representation, "imaginary" objects may be
+calculated - for instance when buildings amalgamate to make a built-up area.
+So perhaps those "imaginary" objects will want caching (somewhere - it's not
+obvious where as the result is shared between multiple "real" objects). Again,
+I don't remember how any of this was actually done.
+
+Geographic data: points, lines, areas
+=====================================
+
+An area can be made of many faces. They can be disjoint.
+
+A line can be made of many edges. Sometimes they can be disjoint, too (well,
+at least maybe).
+
+So there's a decision to be made - can a point be made of many nodes?
+
+Objects in memory
+=================
+
+We were writing in C (there wasn't an obvious other choice - I had done
+research on this!) so we reference counted the objects in memory (you need to
+free them when they're no longer needed). With macros to try and help - but
+reference counting in C is never friendly, as it's easy to forget who is
+responsible for managing reference increment/decrement.
+
+If we'd been able to use Python, Ruby or Java (all not invented when we
+started) then we could have used their mechanisms.
+
+Emacs and LaTeX, oh my
+======================
+
+Around the time we started using C I also started using Emacs (well, XEmacs -
+give a reference) and TeX.
+
+So naturally I designed a standard header comment format for our C functions,
+and wrote an Emacs macro to automatically create LaTeX API documentation.
+
+Which was unnecessarily cruel, as it locked our developers into using Emacs as
+well. This wasn't so uncommon for companies to do back then (determine what
+editor their programmers would use), but it's not common/recommended
+now-a-days for good reason. It would have been much better if I'd written the
+documnentation extraction tool in something else (or ported it to some other
+programming language when our team expanded).
+
+On the other hand, when we came to want to write Java interfaces to our GIS
+library (Python would have been a better fit, but none of our customers had
+heard of Python), one of my colleagues was able (in pure brilliance - I
+thought it would be impossble) to autocreate JNI bindings for more than 90% of
+our C functions, based on those same C function header comments.
+
+
+Other things...
+===============
+
+...
 
 
 Object Versions
